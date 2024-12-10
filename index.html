@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Waste Classifier</title>
+    <style>
+        /* Basic styling */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #212f3d;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: #2c3e50;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #f39c12;
+            margin-bottom: 20px;
+            font-family: 'Helvetica', sans-serif;
+        }
+
+        h2 {
+            color: #f39c12;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 1.1em;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #34495e;
+            border-radius: 10px;
+            display: none;
+        }
+
+        #loading {
+            color: white;
+            display: none;
+        }
+
+        input[type="file"] {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #f39c12;
+            border-radius: 100px;
+            background-color: #000b16;
+            color: #fff;
+            width: 50%;
+        }
+
+        button {
+            padding: 15px 30px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #003516;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* Add hover effect for file input */
+        input[type="file"]:hover {
+            border-color: #2ecc71;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Smart Waste Classifier</h1>
+        <form id="uploadForm">
+            <input type="file" id="imageInput" accept="image/*" required>
+            <br>
+            <button type="submit" id="uploadBtn">Upload and Classify</button>
+        </form>
+
+        <!-- Loading spinner -->
+        <div id="loading">
+            <p>Loading... Please wait while we classify the image.</p>
+        </div>
+
+        <!-- Result Section -->
+        <div id="result">
+            <h2>Prediction Result</h2>
+            <p><strong>Category:</strong> <span id="category"></span></p>
+            <p><strong>Confidence:</strong> <span id="confidence"></span>%</p>
+            <p><strong>Disposal Recommendation:</strong> <span id="recommendation"></span></p>
+        </div>
+    </div>
+
+    <script>
+        // Event listener for form submission
+        document.getElementById("uploadForm").addEventListener("submit", function(event) {
+            event.preventDefault();  // Prevent form from reloading the page
+
+            // Get the file input element
+            const fileInput = document.getElementById("imageInput");
+            const file = fileInput.files[0];  // Get the selected file
+
+            // Check if a file was selected
+            if (!file) {
+                alert("Please select an image file.");
+                return;
+            }
+
+            // Create a FormData object and append the file
+            const formData = new FormData();
+            formData.append("file", file);
+
+            // Show loading spinner
+            document.getElementById("loading").style.display = "block";
+
+            // Send the image to the backend using fetch
+            fetch("http://127.0.0.1:5000/predict", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading spinner
+                document.getElementById("loading").style.display = "none";
+
+                if (data.category && data.confidence && data.recommendation) {
+                    // If prediction was successful, show the result
+                    document.getElementById("category").innerText = data.category;
+                    document.getElementById("confidence").innerText = data.confidence.toFixed(2);
+                    document.getElementById("recommendation").innerText = data.recommendation; // Display recommendation
+                    document.getElementById("result").style.display = "block";
+                } else {
+                    // Handle error if no prediction
+                    alert("Error: " + data.error);
+                }
+            })
+            .catch(error => {
+                // Hide loading spinner in case of error
+                document.getElementById("loading").style.display = "none";
+                alert("Error during prediction: " + error);
+            });
+        });
+    </script>
+</body>
+</html>
